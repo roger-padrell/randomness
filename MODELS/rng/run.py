@@ -9,10 +9,9 @@ sys.path.append(os.path.abspath(script_dir / "../../GENERATORS/rng"))
 from train import Net, fix_length, digit_proportions
 from generate import random_number
 
-model = torch.load(script_dir / "model.pth", map_location="cpu", weights_only=False)
+model = torch.load(script_dir / "medium1.pth", map_location="cpu", weights_only=False)
 def parse_out(out):
     props = out.tolist();
-    print(props)
     return props[0].index(max(props[0]))
     
 def evaluate(number):
