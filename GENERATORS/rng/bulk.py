@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 from alive_progress import alive_bar
 
-FILES = 20;
+FILES = int(input("How many files: "));
 
 # Get the directory of this script
 script_dir = Path(__file__).resolve().parent

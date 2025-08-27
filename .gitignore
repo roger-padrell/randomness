@@ -1,1 +1,4 @@
 .venv/
+DATA/rng/*
+DATA/crypto/*
+**/*.pt

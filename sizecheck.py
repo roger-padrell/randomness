@@ -37,4 +37,3 @@ if __name__ == "__main__":
     current_dir = os.getcwd()
     print(f"Scanning directory: {current_dir}")
     check_file_sizes(current_dir)
-

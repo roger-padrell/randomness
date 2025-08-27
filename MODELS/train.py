@@ -1,120 +1,71 @@
 import torch
 import torch.nn as nn
-import os
+from torch.utils.data import TensorDataset, DataLoader
+import torch.optim as optim
 from alive_progress import alive_bar
+from pathlib import Path
+from datetime import datetime
 
-CTX_LEN = 128;
-PROPORTION_PRECISION = 5;
+today = datetime.today()
+fdate = today.strftime("%d/%m/%y")
 
-def fix_length(nums, target_length=CTX_LEN):
-    if len(nums) < target_length:
-        # prepend zeros
-        return [0] * (target_length - len(nums)) + nums
-    elif len(nums) > target_length:
-        # trim from the start
-        return nums[-target_length:]
-    else:
-        # already the right length
-        return nums
-        
-def digit_proportions(digits):
-    total = len(digits)
-    if total == 0:
-        return [0.0] * 10  # avoid division by zero
-    
-    proportions = [0.0] * 10
-    for d in digits:
-        proportions[d] += 1
-    
-    # normalize to proportions
-    proportions = [round(count / total, PROPORTION_PRECISION) for count in proportions]
-    return proportions
+script_dir = Path(__file__).resolve().parent
 
-def parse_num(nstr):
-    inps = [];
-    oups = [];
-    for i in range(len(nstr)):
-        if i == len(nstr)-1:
-            break;
-        # Add context param
-        l = list(map(int, list(nstr[:i+1])));
-        p = digit_proportions(l);   
-        inps.append(fix_length(l) + p)
-        oups.append(int(nstr[i+1]))
-    return (inps, oups);
-
-def parse_file(path):
-    inps = []
-    oups = []
-    with open(path, "r", encoding="utf-8") as file:
-        file.seek(0)
-        for line in file:
-            ns = parse_num(line.strip());
-            inps += ns[0];
-            oups += ns[1];
-    return (inps, oups);
-
-def count_files(dir):
-    return len([1 for x in list(os.scandir(dir)) if x.is_file()])
-
-def parse_set(path):
-    inps = []
-    oups = []
-    files = count_files(path);
-    with alive_bar(files) as bar:
-        with os.scandir(path) as entries:
-            for entry in entries:
-                if entry.is_file():
-                    f = parse_file(entry.path);
-                    inps += f[0];
-                    oups += f[1];
-                    bar()
-    return (inps, oups)
-parse_set("../DATA/rng/");
-
+# ---------------------- Model ----------------------
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(138, 256)   # first hidden layer
-        self.fc2 = nn.Linear(256, 128)   # second hidden layer
-        self.fc3 = nn.Linear(128, 10)    # output layer
+        self.fc1 = nn.Linear(138, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 10)
         self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
-        x = self.sigmoid(self.fc3(x))  # outputs between 0 and 1
+        x = self.fc3(x)  # raw logits
         return x
 
-# X_data = [[...138 numbers...], [...], ...]
-# Y_data = [[...10 numbers...], [...], ...]
-"""
-# Convert to tensors
-X_tensor = torch.tensor(X_data, dtype=torch.float32)
-Y_tensor = torch.tensor(Y_data, dtype=torch.float32)
+if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
 
-# Create dataset & dataloader
-dataset = TensorDataset(X_tensor, Y_tensor)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    print("Loading preprocessed dataset...")
+    dataname = input('What dataset to use (rng, human, crypto, ai): ');
+    X_tensor, Y_tensor = torch.load(script_dir / f"../DATA/{dataname}.pt")
 
-# ----- Training setup -----
-model = Net()
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+    dataset = TensorDataset(X_tensor, Y_tensor)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+	
+    if input("Use existing model as base (y/n): ") == "y":
+        mpath = input("Existing model path: ")
+        model = torch.load(mpath, map_location="cpu", weights_only=False)
+        mname = mpath.split(".")[0];
+    else:
+    	model = Net().to(device)
+    	mname = f"{dataname}({fdate})"
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.AdamW(model.parameters(), lr=0.001)
 
-# ----- Training loop -----
-epochs = 20
-for epoch in range(epochs):
-    for batch_X, batch_Y in dataloader:
-        # Forward pass
-        outputs = model(batch_X)
-        loss = criterion(outputs, batch_Y)
+    print("Started training")
+    epochs = 20
 
-        # Backward + optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+    for epoch in range(epochs):
+        running_loss = 0.0
+        with alive_bar(len(dataloader)) as bar:
+            for batch_X, batch_Y in dataloader:
+                batch_X, batch_Y = batch_X.to(device), batch_Y.to(device)
 
-    print(f"Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}")
-"""
+                outputs = model(batch_X)
+                loss = criterion(outputs, batch_Y)
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item()
+                bar()
+
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}")
+        torch.save(model, f"{mname}_e{epoch+1}.pth")
+
