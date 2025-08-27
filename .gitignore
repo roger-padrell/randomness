@@ -1,6 +1,7 @@
 .venv/
-DATA/rng/**
-DATA/crypto/**
+DATA/rng/*.txt
+DATA/crypto/*.txt
 **/*.pt
 !DATA/ai
 !DATA/human
+**/__pycache__
