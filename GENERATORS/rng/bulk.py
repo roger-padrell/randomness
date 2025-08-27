@@ -9,8 +9,7 @@ script_dir = Path(__file__).resolve().parent
 
 # Run the delete.py script with piped input
 delete_script = script_dir / "../../DATA/delete.py"
-delete_input = "4\ny\n"
-subprocess.run(["uv", "run", str(delete_script)], input=delete_input, text=True)
+subprocess.run(["uv", "run", str(delete_script)], text=True)
 
 # Run generate.py 100 times with input "1024"
 generate_script = script_dir / "generate.py"
