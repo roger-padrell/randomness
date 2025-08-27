@@ -1,4 +1,6 @@
 .venv/
-DATA/rng/*
-DATA/crypto/*
+DATA/rng/**
+DATA/crypto/**
 **/*.pt
+!DATA/ai
+!DATA/human
