@@ -3,14 +3,6 @@ import argparse
 from alive_progress import alive_bar
 import os
 import sys
-
-def clear_term():
-    # For Windows
-    if os.name == 'nt':
-        os.system('cls')
-    # For Linux and macOS
-    else:
-        os.system('clear')
         
 def export_txt(cont):
     res = "";
@@ -85,7 +77,6 @@ def export(cont, ft):
         print(f"'{ft}' is not a valid export format", file=sys.stderr)
 
 if __name__ == "__main__":
-    clear_term()
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", nargs="+", required=False, help="List of models")
     parser.add_argument("-s", action="store_true", default=False, help="Silent, hide logs")
@@ -122,7 +113,6 @@ if __name__ == "__main__":
     
     # Run
     results = {}
-    clear_term()
     with alive_bar(len(models)*TOTAL_RUNS, file=sys.stderr) as bar:
         for m in range(len(models)):
             name = models[m].split("/")
