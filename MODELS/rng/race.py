@@ -1,4 +1,4 @@
-from test import Net, get_models, test_model
+from test import Net, get_models, test_model, random_number
 import argparse
 from alive_progress import alive_bar
 import os
@@ -110,11 +110,17 @@ if __name__ == "__main__":
                 models.append(all[int(splitsel[mod])]);
     else:
         models = args.m;
-        
+       
     silent = args.s;
     TOTAL_RUNS = args.r;
     adv = True;
+        
+    # Generate numbers
+    ns = [];
+    for i in range(TOTAL_RUNS):
+        ns.append(str(random_number()));
     
+    # Run
     results = {}
     clear_term()
     with alive_bar(len(models)*TOTAL_RUNS, file=sys.stderr) as bar:
@@ -123,5 +129,5 @@ if __name__ == "__main__":
             name = name[len(name)-1].split(".")[0]
             if not silent:
                 bar.title("Testing " + name)
-            results[name] = test_model(models[m], True, adv, TOTAL_RUNS, bar);
+            results[name] = test_model(models[m], True, adv, TOTAL_RUNS, bar, ns=ns);
     print(export(results, args.o))

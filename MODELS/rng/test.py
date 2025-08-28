@@ -58,8 +58,7 @@ def single_run(evaluate):
             correct += 1;
     return (correct, total);
     
-def single_run_adv(evaluate):
-    n = str(random_number())
+def single_run_adv(evaluate, n=str(random_number())):
     total = 0
     correct = 0
     props = [0,0,0,0,0,0,0,0,0,0]
@@ -77,13 +76,16 @@ def single_run_adv(evaluate):
             correct += 1
     return [correct, total, props]
 
-def test_loop(evaluate, adv, TOTAL_RUNS, bar):
+def test_loop(evaluate, adv, TOTAL_RUNS, bar, ns=None):
     total_n = 0
     correct = 0
-    props = [0,0,0,0,0,0,0,0,0,0]
+    props = [0,0,0,0,0,0,0,0,0,0];
     for i in range(TOTAL_RUNS):
         if adv is True:
-            r = single_run_adv(evaluate)
+            if ns is None:
+                r = single_run_adv(evaluate)
+            else:
+            	r = single_run_adv(evaluate, ns[i])
             for pr in range(len(r[2])):
                 props[pr] += r[2][pr]
         else:
@@ -94,7 +96,7 @@ def test_loop(evaluate, adv, TOTAL_RUNS, bar):
         bar()
     return [total_n, correct, props]
 
-def test_model(path, silent=False, adv=False, TOTAL_RUNS=10, outside_bar=None):
+def test_model(path, silent=False, adv=False, TOTAL_RUNS=10, outside_bar=None, ns=None):
     evaluate = load_model(path)
     if silent:
         pout = sys.stderr;
@@ -103,9 +105,9 @@ def test_model(path, silent=False, adv=False, TOTAL_RUNS=10, outside_bar=None):
         print("Starting evaluation...")
     if outside_bar is None:
         with alive_bar(TOTAL_RUNS, file=pout) as bar:
-            total_n, correct, props = test_loop(evaluate, adv, TOTAL_RUNS, bar)
+            total_n, correct, props = test_loop(evaluate, adv, TOTAL_RUNS, bar, ns)
     else:
-        total_n, correct, props = test_loop(evaluate, adv, TOTAL_RUNS, outside_bar)
+        total_n, correct, props = test_loop(evaluate, adv, TOTAL_RUNS, outside_bar, ns)
     if adv:
         for pr in range(len(props)):
             props[pr] = props[pr] / total_n;
