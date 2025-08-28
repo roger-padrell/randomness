@@ -6,8 +6,7 @@ import numpy as np
 script_dir = Path(__file__).resolve().parent
 sys.path.append(os.path.abspath(script_dir / ".."))
 sys.path.append(os.path.abspath(script_dir / "../../GENERATORS/rng"))
-from train import Net
-from preprocess import fix_length, digit_proportions
+from train import Net, fix_length, digit_proportions 
 from generate import random_number
 from alive_progress import alive_bar
 import glob

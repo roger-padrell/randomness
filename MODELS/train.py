@@ -127,6 +127,6 @@ if __name__ == "__main__":
 
                 running_loss += loss.item()
                 bar()
-        torch.save(model, script_dir / f"{dts}/{start}_{epotch}.pth")
+        torch.save(model, script_dir / f"{dts}/{start}_{epoch}-{epochs}.pth")
         print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(dataloader):.4f}")
 
